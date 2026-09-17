@@ -64,6 +64,12 @@ class NewTableProxy {
       const std::string& column, const detail::Selection& selection = {},
       const std::shared_ptr<arrow::Array>& result = nullptr) const;
 
+  // Get a slice of a single cell (table row) from an array column
+  arrow::Result<std::shared_ptr<arrow::Array>> GetCellSlice(
+      const std::string& column, int64_t rownr, const std::vector<int64_t>& blc,
+      const std::vector<int64_t>& trc,
+      const std::vector<int64_t>& inc = {}) const;
+
   // Put data into the column from the given array,
   // possibly guided by a selection along each index
   arrow::Result<bool> PutColumn(const std::string& column,

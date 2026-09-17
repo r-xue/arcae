@@ -67,6 +67,12 @@ cdef extern from "arcae/new_table_proxy.h" namespace "arcae" nogil:
             const string & column,
             const CSelection & selection,
             shared_ptr[CArray] result)
+        CResult[shared_ptr[CArray]] GetCellSlice " NewTableProxy::GetCellSlice"(
+            const string & column,
+            int64_t rownr,
+            const vector[int64_t] & blc,
+            const vector[int64_t] & trc,
+            const vector[int64_t] & inc)
         CResult[bool] PutColumn " NewTableProxy::PutColumn"(
             const string & column,
             const shared_ptr[CArray] & data,

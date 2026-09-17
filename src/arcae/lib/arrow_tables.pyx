@@ -7,6 +7,7 @@ import cython
 import json
 from typing import Any, Dict, List, Union
 
+from libc.stdint cimport int64_t
 from libcpp cimport bool
 from libcpp.memory cimport shared_ptr
 from libcpp.string cimport string
@@ -292,6 +293,52 @@ cdef class Table:
         with nogil:
             carray = GetResultValue(
                 self.c_table.get().GetColumn(cpp_column, selection, cpp_result)
+            )
+
+        py_column = pyarrow_wrap_array(carray)
+        return self._arrow_to_numpy(column, py_column)
+
+    def getcellslice(
+        self,
+        column: str,
+        rownr: int,
+        blc: Sequence[int],
+        trc: Sequence[int],
+        inc: Sequence[int] | None = None
+    ) -> np.ndarray:
+        """Get a multi-dimensional slice from a single cell (row) of an array column.
+
+        Parameters
+        ----------
+        column:
+            Name of the array column.
+        rownr:
+            Zero-based row index (table cell).
+        blc:
+            Bottom-left corner coordinate of the slice in 0-based, C-order.
+        trc:
+            Top-right corner coordinate of the slice in 0-based, C-order (inclusive).
+        inc:
+            Optional stride along each dimension in C-order (default 1).
+
+        Returns
+        -------
+        numpy.ndarray
+            Multi-dimensional slice matching the requested bounds.
+        """
+        cdef:
+            string cpp_column = tobytes(column)
+            int64_t cpp_rownr = rownr
+            vector[int64_t] cpp_blc = [int(b) for b in blc]
+            vector[int64_t] cpp_trc = [int(t) for t in trc]
+            vector[int64_t] cpp_inc = [int(i) for i in inc] if inc is not None and len(inc) > 0 else []
+            shared_ptr[CArray] carray
+
+        with nogil:
+            carray = GetResultValue(
+                self.c_table.get().GetCellSlice(
+                    cpp_column, cpp_rownr, cpp_blc, cpp_trc, cpp_inc
+                )
             )
 
         py_column = pyarrow_wrap_array(carray)

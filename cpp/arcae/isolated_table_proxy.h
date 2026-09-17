@@ -68,6 +68,9 @@ class IsolatedTableProxy : public std::enable_shared_from_this<IsolatedTableProx
                        } catch (casacore::AipsError& e) {
                          return arrow::Status::Invalid("Unhandled casacore exception: ",
                                                        e.what());
+                       } catch (const std::exception& e) {
+                         return arrow::Status::Invalid("Unhandled exception: ",
+                                                       e.what());
                        }
                      });
   }

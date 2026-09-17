@@ -66,6 +66,7 @@ else()
 endif()
 
 add_library(arcae STATIC
+    arcae/cell_slice.cc
     arcae/configuration.cc
     arcae/descriptor.cc
     arcae/data_partition.cc

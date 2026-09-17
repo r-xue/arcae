@@ -14,6 +14,7 @@
 #include <casacore/casa/Containers/Record.h>
 #include <casacore/tables/Tables/TableProxy.h>
 
+#include "arcae/cell_slice.h"
 #include "arcae/read_impl.h"
 #include "arcae/result_shape.h"
 #include "arcae/selection.h"
@@ -90,6 +91,12 @@ Result<std::shared_ptr<Array>> NewTableProxy::GetColumn(
     const std::string& column, const detail::Selection& selection,
     const std::shared_ptr<Array>& result) const {
   return ReadImpl(itp_, column, selection, result).MoveResult();
+}
+
+Result<std::shared_ptr<Array>> NewTableProxy::GetCellSlice(
+    const std::string& column, int64_t rownr, const std::vector<int64_t>& blc,
+    const std::vector<int64_t>& trc, const std::vector<int64_t>& inc) const {
+  return detail::ReadCellSliceImpl(itp_, column, rownr, blc, trc, inc).MoveResult();
 }
 
 Result<std::shared_ptr<Array>> NewTableProxy::GetRowShapes(

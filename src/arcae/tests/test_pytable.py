@@ -351,6 +351,45 @@ def test_getcol(getcol_table):
         T.getcol("NONEXISTENT")
 
 
+@pytest.mark.parametrize(
+    "col, row, blc, trc, inc, expected",
+    [
+        ("FLOAT_DATA", 1, [0, 0], [1, 3], None, np.full((2, 4), 1, dtype=np.float32)),
+        ("FLOAT_DATA", 2, [0, 1], [1, 3], [1, 2], [[2, 2], [2, 2]]),
+        ("COMPLEX_DATA", 2, [0, 0], [1, 1], None, np.full((2, 2), 2 + 2j, dtype=np.complex128)),
+        ("FLAG", 0, [0, 0], [0, 3], None, np.full((1, 4), 1, dtype=np.uint8)),
+        ("NESTED_STRING", 1, [0, 0], [1, 1], None, [["1", "1"], ["1", "1"]]),
+        ("VARDATA", 2, [0, 0], [1, 1], None, np.full((2, 2), 2 + 0j, dtype=np.complex128)),
+    ],
+)
+def test_getcellslice_success(getcol_table, col, row, blc, trc, inc, expected):
+    """Test getcellslice on fixed, complex, boolean, string, and variably shaped columns."""
+    T = arcae.table(getcol_table, readonly=True)
+    args = (col, row, blc, trc) if inc is None else (col, row, blc, trc, inc)
+    result = T.getcellslice(*args)
+    assert_array_equal(result, expected)
+    if np.iscomplexobj(expected):
+        assert np.iscomplexobj(result)
+
+
+@pytest.mark.parametrize(
+    "col, row, blc, trc, inc, exc, match",
+    [
+        ("FLOAT_DATA", 99, [0, 0], [1, 1], None, IndexError, "Row 99 is out of bounds"),
+        ("FLOAT_DATA", 0, [0, 0], [10, 10], None, IndexError, "is invalid for dimension|exceeds dimension"),
+        ("FLOAT_DATA", 0, [0], [1], None, ValueError, "dimensions .* do not match cell ndim"),
+        ("FLOAT_DATA", 0, [0, 0], [1, 1], [0, 1], ValueError, "inc must be positive"),
+        ("TIME", 0, [0], [0], None, ValueError, "not an array column"),
+    ],
+)
+def test_getcellslice_errors(getcol_table, col, row, blc, trc, inc, exc, match):
+    """Test getcellslice error handling for invalid rows, bounds, dimensions, and strides."""
+    T = arcae.table(getcol_table, readonly=True)
+    args = (col, row, blc, trc) if inc is None else (col, row, blc, trc, inc)
+    with pytest.raises(exc, match=match):
+        T.getcellslice(*args)
+
+
 def test_partial_read(sorting_table):
     """Tests that partial reads work"""
     T = arcae.table(sorting_table)
